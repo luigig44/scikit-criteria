@@ -167,12 +167,16 @@ class _LPBase:
 
     def __init__(self, z, name="no-name", solver=None, **solver_kwds):
         """Create an instance of problem solver."""
-        if solver is None or (isinstance(solver, str) and solver.upper() == "PULP"): # default
+        if solver is None or (
+            isinstance(solver, str) and solver.upper() == "PULP"
+        ):  # default
             solver = pulp.LpSolverDefault.name
 
         problem = pulp.LpProblem(name, self.sense)
         if isinstance(solver, str):
-            solver = pulp.getSolver(solver.upper(), **{"msg": False, **solver_kwds})
+            solver = pulp.getSolver(
+                solver.upper(), **{"msg": False, **solver_kwds}
+            )
         problem.setSolver(solver)
 
         problem += z, "Z"
@@ -224,7 +228,7 @@ class _LPBase:
 
         """
         problem = self._problem.copy()
-        problem.setSolver(self._problem.solver.copy())
+        # problem.setSolver(self._problem.solver.copy())
         problem.solve()
 
         objective = pulp.value(problem.objective)

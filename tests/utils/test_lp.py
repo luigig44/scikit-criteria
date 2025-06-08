@@ -44,9 +44,11 @@ def test_is_available(solver, expected):
 
 class MYPULP(lp.pulp.PULP_CBC_CMD):
     name = "MYPULP"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.msg = False  # Disable output for testing
+
 
 @pytest.mark.parametrize(
     "solver", [None, "PULP_CBC_CMD", "pulp", "PuLP", "PULP", MYPULP()]
