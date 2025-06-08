@@ -167,7 +167,7 @@ class _LPBase:
 
     def __init__(self, z, name="no-name", solver=None, **solver_kwds):
         """Create an instance of problem solver."""
-        if solver is None or solver.upper() == "PULP": # default
+        if solver is None or (isinstance(solver, str) and solver.upper() == "PULP"): # default
             solver = pulp.LpSolverDefault.name
 
         problem = pulp.LpProblem(name, self.sense)

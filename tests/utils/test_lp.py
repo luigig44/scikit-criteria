@@ -42,8 +42,14 @@ def test_is_available(solver, expected):
     assert lp.is_solver_available(solver) is expected
 
 
+class MYPULP(lp.pulp.PULP_CBC_CMD):
+    name = "MYPULP"
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.msg = False  # Disable output for testing
+
 @pytest.mark.parametrize(
-    "solver", [None, "PULP_CBC_CMD", "pulp", "PuLP", "PULP"]
+    "solver", [None, "PULP_CBC_CMD", "pulp", "PuLP", "PULP", MYPULP()]
 )
 def test_maximize(solver):
     x0 = lp.Float("x0", low=0)
@@ -63,6 +69,7 @@ def test_maximize(solver):
     assert x2 is model.v.x2
 
     result = model.solve()
+    assert result.lp_problem.solver.name == model._problem.solver.name
     assert result.lp_status == "Optimal"
     assert result.lp_objective == 540
     assert np.all(result.lp_variables == ["x0", "x1", "x2"])
@@ -80,7 +87,7 @@ def test_maximize(solver):
 
 
 @pytest.mark.parametrize(
-    "solver", [None, "PULP_CBC_CMD", "pulp", "PuLP", "PULP"]
+    "solver", [None, "PULP_CBC_CMD", "pulp", "PuLP", "PULP", MYPULP()]
 )
 def test_minimize_from_matrix(solver):
     x0 = lp.Float("x0", low=0)
@@ -100,6 +107,7 @@ def test_minimize_from_matrix(solver):
     assert x2 is model.v.x2
 
     result = model.solve()
+    assert result.lp_problem.solver.name == model._problem.solver.name
     assert result.lp_status == "Optimal"
     assert result.lp_objective == 325
     assert np.all(result.lp_variables == ["x0", "x1", "x2"])
