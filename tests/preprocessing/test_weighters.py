@@ -57,6 +57,7 @@ def test_SKCWeighterABC_weight_matrix_not_implemented(decision_matrix):
         transformer.transform(dm)
 
 
+@pytest.mark.run(order=-2)
 def test_SKCWeighterABC_not_redefined_abc_methods():
     class Foo(SKCWeighterABC):
         _skcriteria_parameters = []

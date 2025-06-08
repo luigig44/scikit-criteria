@@ -61,7 +61,7 @@ def test_SKCDecisionMakerABC_flow(decision_matrix):
     assert np.all(result["rank"] == np.arange(len(dm.alternatives)) + 1)
     assert result["extra"] == {}
 
-
+@pytest.mark.run(order=-2)
 @pytest.mark.parametrize("not_redefine", ["_evaluate_data", "_make_result"])
 def test_SKCDecisionMakerABC_not_redefined(not_redefine):
     content = {"_skcriteria_parameters": []}

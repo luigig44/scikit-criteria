@@ -26,6 +26,7 @@ from skcriteria.core import methods
 # =============================================================================
 
 
+@pytest.mark.run(order=-2)
 def test_SKCMethodABC_no__skcriteria_dm_type():
     with pytest.raises(TypeError):
 
@@ -33,6 +34,7 @@ def test_SKCMethodABC_no__skcriteria_dm_type():
             pass
 
 
+@pytest.mark.run(order=-2)
 def test_SKCMethodABC_no__skcriteria_parameters():
     with pytest.raises(TypeError):
 
@@ -43,6 +45,7 @@ def test_SKCMethodABC_no__skcriteria_parameters():
                 pass
 
 
+@pytest.mark.run(order=-2)
 def test_SKCMethodABC_repr():
     class Foo(methods.SKCMethodABC):
         _skcriteria_dm_type = "foo"
@@ -75,6 +78,7 @@ def test_SKCMethodABC_no_params():
     assert Foo._skcriteria_parameters == frozenset()
 
 
+@pytest.mark.run(order=-2)
 def test_SKCMethodABC_already_defined__skcriteria_parameters():
     class Base(methods.SKCMethodABC):
         _skcriteria_dm_type = "foo"
@@ -90,6 +94,7 @@ def test_SKCMethodABC_already_defined__skcriteria_parameters():
     assert Foo._skcriteria_parameters == {"x"}
 
 
+@pytest.mark.run(order=-2)
 def test_SKCMethodABC_params_in_init():
     class Base(methods.SKCMethodABC):
         _skcriteria_dm_type = "foo"
@@ -105,6 +110,7 @@ def test_SKCMethodABC_params_in_init():
                 pass
 
 
+@pytest.mark.run(order=-2)
 def test_SKCMethodABC_get_parameters():
     class Foo(methods.SKCMethodABC):
         _skcriteria_dm_type = "foo"
@@ -119,6 +125,7 @@ def test_SKCMethodABC_get_parameters():
     assert foo.get_parameters() == {"foo": 2, "faa": 1}
 
 
+@pytest.mark.run(order=-2)
 def test_SKCMethodABC_copy():
     class Foo(methods.SKCMethodABC):
         _skcriteria_dm_type = "foo"
@@ -137,6 +144,7 @@ def test_SKCMethodABC_copy():
         original.copy(foo=100)
 
 
+@pytest.mark.run(order=-2)
 def test_SKCMethodABC_replace():
     class Foo(methods.SKCMethodABC):
         _skcriteria_dm_type = "foo"

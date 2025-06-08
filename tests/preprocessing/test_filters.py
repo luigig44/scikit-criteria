@@ -29,6 +29,7 @@ from skcriteria.preprocessing import filters
 # =============================================================================
 
 
+@pytest.mark.run(order=-2)
 def test_SKCByCriteriaFilterABC():
     class FooFilter(filters.SKCByCriteriaFilterABC):
         def _make_mask(
@@ -44,6 +45,7 @@ def test_SKCByCriteriaFilterABC():
     assert flt.ignore_missing_criteria is False
 
 
+@pytest.mark.run(order=-2)
 def test_SKCByCriteriaFilterABC_not_provide_filters():
     class FooFilter(filters.SKCByCriteriaFilterABC):
         def _make_mask(
@@ -58,6 +60,7 @@ def test_SKCByCriteriaFilterABC_not_provide_filters():
         FooFilter({})
 
 
+@pytest.mark.run(order=-2)
 def test_SKCByCriteriaFilterABC_not_implemented_make_mask():
     dm = skc.mkdm(
         matrix=[
@@ -90,6 +93,7 @@ def test_SKCByCriteriaFilterABC_not_implemented_make_mask():
         tfm.transform(dm)
 
 
+@pytest.mark.run(order=-2)
 def test_SKCByCriteriaFilterABC_not_implemented_coerce_filters():
     class FooFilter(filters.SKCByCriteriaFilterABC):
         def _make_mask(
@@ -104,6 +108,7 @@ def test_SKCByCriteriaFilterABC_not_implemented_coerce_filters():
         FooFilter({"ROE": 1})
 
 
+@pytest.mark.run(order=-2)
 def test_SKCByCriteriaFilterABC_missing_criteria():
     dm = skc.mkdm(
         matrix=[

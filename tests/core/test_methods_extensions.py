@@ -109,18 +109,26 @@ def test_SLCMethodABC_concrete_subclass_copy():
         SKCSetFilterABC: {"criteria_filters": {"foo": [1]}},
         RankInvariantChecker: {"dmaker": _FakeDM()},
     }
-
+    import gc
+    gc.collect()
     for scls in _get_subclasses(methods.SKCMethodABC):
         kwargs = {}
         for cls, extra_params in extra_parameters_by_type.items():
             if issubclass(scls, cls):
                 kwargs.update(extra_params)
 
-        original = scls(**kwargs)
-        copy = original.copy()
+        try:
+            original = scls(**kwargs)
+            copy = original.copy()
 
-        poriginal = original.get_parameters()
-        pcopy = copy.get_parameters()
+            poriginal = original.get_parameters()
+            pcopy = copy.get_parameters()
+        # except Exception: # pragma: no cover
+        #     # Some methods are not instantiable.
+        #     print("FAILING:\t", end="")
+        #     continue
+        finally:
+            print(scls.__qualname__)
 
         diff = _parameters_diff(poriginal, pcopy)
         if diff:

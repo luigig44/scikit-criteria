@@ -29,6 +29,7 @@ from skcriteria.preprocessing import (
 # =============================================================================
 
 
+@pytest.mark.run(order=-2)
 def test_SKCTransformerABC_not_redefined_abc_methods():
     class Foo(SKCTransformerABC):
         _skcriteria_parameters = []
@@ -57,7 +58,7 @@ def test_SKCMatrixAndWeightTransformerABC_transform_data_not_implemented(
     with pytest.raises(NotImplementedError):
         transformer.transform(dm)
 
-
+@pytest.mark.run(order=-2)
 def test_SKCMatrixAndWeightTransformerABC_not_redefined_abc_methods():
     class Foo(SKCMatrixAndWeightTransformerABC):
         pass

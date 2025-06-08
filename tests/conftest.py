@@ -31,7 +31,8 @@ from skcriteria import core
 # =============================================================================
 # CONSTANTS
 # =============================================================================
-
+import gc
+gc.disable()
 
 MAXS_O_ALIAS = list(core.Objective._MAX_ALIASES.value)
 MINS_O_ALIAS = list(core.Objective._MIN_ALIASES.value)
