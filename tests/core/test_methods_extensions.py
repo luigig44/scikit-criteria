@@ -16,6 +16,8 @@
 # IMPORTS
 # =============================================================================
 
+import gc
+
 import numpy as np
 
 import pytest
@@ -73,6 +75,10 @@ def _parameters_diff(original, copy):
 
 @pytest.mark.run(order=-1)
 def test_SLCMethodABC_concrete_subclass_copy():
+    # Force GC collection of classes that other tests created
+    # These may be invalid (e.g. __init__ would fail)
+    gc.collect()
+
     # CLASSES FOR THE FAKE PIPELINE
     class _FakeTrans:
         def transform(self):
