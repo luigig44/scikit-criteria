@@ -23,6 +23,8 @@ real objects.
 # =============================================================================
 # IMPORTS
 # =============================================================================ç
+from functools import partial
+
 from .utils import hidden
 
 with hidden():
@@ -116,6 +118,61 @@ def _check_function_parameters(func):
         )
 
 
+class _AutoMethodMixin:
+    def __init_subclass__(cls, from_=None, hparams={}, **kwargs):
+        if from_ is not None:
+            _check_model_CapWords_convention_name(from_.__name__)
+            _check_function_parameters(from_)
+            cls._skcriteria_parameters = frozenset(hparams)
+            cls.__init__.__signature__ = _create_init_signature(hparams)
+            cls.__doc__ = from_.__doc__
+            cls.__name__ = from_.__name__
+            cls.__qualname__ = from_.__qualname__
+            cls.__module__ = from_.__module__
+            cls._skcriteria_auto_function = staticmethod(from_)
+        else:
+            cls._skcriteria_abstract_class = True
+        super().__init_subclass__(**kwargs)
+
+    def __init__(self, **kwargs):
+        try:
+            bound = self.__init__.__signature__.bind(**kwargs)
+        except TypeError as err:
+            raise TypeError(f"{type(self).__name__}.__init__() {err}")
+        bound.apply_defaults()
+        self.__dict__.update(bound.kwargs)
+
+
+class _AutoAggABC(_AutoMethodMixin, SKCDecisionMakerABC):
+    @doc_inherit(SKCDecisionMakerABC._evaluate_data)
+    def _evaluate_data(self, **kwargs):
+        rank, extra = self._skcriteria_auto_function(hparams=self, **kwargs)
+        return rank, extra
+
+    @doc_inherit(SKCDecisionMakerABC._make_result)
+    def _make_result(self, alternatives, values, extra):
+        return RankResult(
+            self.get_method_name(),
+            alternatives=alternatives,
+            values=values,
+            extra=extra,
+        )
+
+
+class _AutoTransformerABC(_AutoMethodMixin, SKCTransformerABC):
+    @doc_inherit(SKCTransformerABC._transform_data)
+    def _transform_data(self, **kwargs):
+        tdata = self._skcriteria_auto_function(hparams=self, **kwargs)
+
+        # if the function return tdata we will remove it
+        tdata.pop("hparams", None)
+
+        # replace the old values with the new ones
+        kwargs.update(tdata)
+
+        return kwargs
+
+
 def mkagg(maybe_func=None, **hparams):
     """Decorator factory function for creating aggregation classes.
 
@@ -165,50 +222,13 @@ def mkagg(maybe_func=None, **hparams):
     hyperparameter 'foo' and the name 'MyAgg'.
 
     """
+    if maybe_func is None:
+        return partial(mkagg, **hparams)
 
-    def _agg_maker(agg_func):
-        agg_name = agg_func.__name__
-        _check_model_CapWords_convention_name(agg_name)
-        _check_function_parameters(agg_func)
+    class AGG(_AutoAggABC, from_=maybe_func, hparams=hparams):
+        pass
 
-        class _AutoAGG(SKCDecisionMakerABC):
-            __doc__ = agg_func.__doc__
-
-            _skcriteria_parameters = tuple(hparams)
-            _skcriteria_init_signature = _create_init_signature(hparams)
-
-            def __init__(self, **kwargs):
-                try:
-                    bound = self._skcriteria_init_signature.bind(**kwargs)
-                except TypeError as err:
-                    raise TypeError(f"{agg_name}.__init__() {err}")
-
-                bound.apply_defaults()
-                self.__dict__.update(bound.kwargs)
-
-            __init__.__signature__ = _skcriteria_init_signature
-
-            @doc_inherit(SKCDecisionMakerABC.get_method_name)
-            def get_method_name(self):
-                return agg_name
-
-            @doc_inherit(SKCDecisionMakerABC._evaluate_data)
-            def _evaluate_data(self, **kwargs):
-                rank, extra = agg_func(hparams=self, **kwargs)
-                return rank, extra
-
-            @doc_inherit(SKCDecisionMakerABC._make_result)
-            def _make_result(self, alternatives, values, extra):
-                return RankResult(
-                    agg_name,
-                    alternatives=alternatives,
-                    values=values,
-                    extra=extra,
-                )
-
-        return type(agg_name, (_AutoAGG,), {"__module__": agg_func.__module__})
-
-    return _agg_maker if maybe_func is None else _agg_maker(maybe_func)
+    return AGG
 
 
 def mktransformer(maybe_func=None, **hparams):
@@ -267,53 +287,10 @@ def mktransformer(maybe_func=None, **hparams):
     The above example will create a transformation class with the specified
     hyperparameter 'foo' and the name 'MyTrans'.
     """
+    if maybe_func is None:
+        return partial(mktransformer, **hparams)
 
-    def _transformer_maker(transformer_func):
-        transformer_name = transformer_func.__name__
-        _check_model_CapWords_convention_name(transformer_name)
-        _check_function_parameters(transformer_func)
+    class Transformer(_AutoTransformerABC, from_=maybe_func, hparams=hparams):
+        pass
 
-        class _AutoTransformer(SKCTransformerABC):
-            __doc__ = transformer_func.__doc__
-
-            _skcriteria_parameters = tuple(hparams)
-            _skcriteria_init_signature = _create_init_signature(hparams)
-
-            def __init__(self, **kwargs):
-                try:
-                    bound = self._skcriteria_init_signature.bind(**kwargs)
-                except TypeError as err:
-                    raise TypeError(f"{transformer_name}.__init__() {err}")
-
-                bound.apply_defaults()
-                self.__dict__.update(bound.kwargs)
-
-            __init__.__signature__ = _skcriteria_init_signature
-
-            @doc_inherit(SKCTransformerABC.get_method_name)
-            def get_method_name(self):
-                return transformer_name
-
-            @doc_inherit(SKCTransformerABC._transform_data)
-            def _transform_data(self, **kwargs):
-                tdata = transformer_func(hparams=self, **kwargs)
-
-                # if the function return tdata we will remove it
-                tdata.pop("hparams", None)
-
-                # replace the old values with the new ones
-                kwargs.update(tdata)
-
-                return kwargs
-
-        return type(
-            transformer_name,
-            (_AutoTransformer,),
-            {"__module__": transformer_func.__module__},
-        )
-
-    return (
-        _transformer_maker
-        if maybe_func is None
-        else _transformer_maker(maybe_func)
-    )
+    return Transformer
