@@ -143,37 +143,22 @@ class _AutoMethodMixin:
         self.__dict__.update(bound.kwargs)
 
 
-class _AutoAggABC(_AutoMethodMixin, SKCDecisionMakerABC):
-    @doc_inherit(SKCDecisionMakerABC._evaluate_data)
-    def _evaluate_data(self, **kwargs):
-        rank, extra = self._skcriteria_auto_function(hparams=self, **kwargs)
-        return rank, extra
+def _mkmaker(cls):
+    @doc_inherit(cls)
+    def mk(maybe_func=None, **hparams):
+        if maybe_func is None:
+            return partial(mk, **hparams)
 
-    @doc_inherit(SKCDecisionMakerABC._make_result)
-    def _make_result(self, alternatives, values, extra):
-        return RankResult(
-            self.get_method_name(),
-            alternatives=alternatives,
-            values=values,
-            extra=extra,
-        )
+        class scls(cls, from_=maybe_func, hparams=hparams):
+            pass
+
+        return scls
+
+    return mk
 
 
-class _AutoTransformerABC(_AutoMethodMixin, SKCTransformerABC):
-    @doc_inherit(SKCTransformerABC._transform_data)
-    def _transform_data(self, **kwargs):
-        tdata = self._skcriteria_auto_function(hparams=self, **kwargs)
-
-        # if the function return tdata we will remove it
-        tdata.pop("hparams", None)
-
-        # replace the old values with the new ones
-        kwargs.update(tdata)
-
-        return kwargs
-
-
-def mkagg(maybe_func=None, **hparams):
+@_mkmaker
+class mkagg(_AutoMethodMixin, SKCDecisionMakerABC):
     """Decorator factory function for creating aggregation classes.
 
     Parameters
@@ -222,16 +207,24 @@ def mkagg(maybe_func=None, **hparams):
     hyperparameter 'foo' and the name 'MyAgg'.
 
     """
-    if maybe_func is None:
-        return partial(mkagg, **hparams)
 
-    class AGG(_AutoAggABC, from_=maybe_func, hparams=hparams):
-        pass
+    @doc_inherit(SKCDecisionMakerABC._evaluate_data)
+    def _evaluate_data(self, **kwargs):
+        rank, extra = self._skcriteria_auto_function(hparams=self, **kwargs)
+        return rank, extra
 
-    return AGG
+    @doc_inherit(SKCDecisionMakerABC._make_result)
+    def _make_result(self, alternatives, values, extra):
+        return RankResult(
+            self.get_method_name(),
+            alternatives=alternatives,
+            values=values,
+            extra=extra,
+        )
 
 
-def mktransformer(maybe_func=None, **hparams):
+@_mkmaker
+class mktransformer(_AutoMethodMixin, SKCTransformerABC):
     """Decorator factory function for creating transformation classes.
 
     Parameters
@@ -287,10 +280,12 @@ def mktransformer(maybe_func=None, **hparams):
     The above example will create a transformation class with the specified
     hyperparameter 'foo' and the name 'MyTrans'.
     """
-    if maybe_func is None:
-        return partial(mktransformer, **hparams)
 
-    class Transformer(_AutoTransformerABC, from_=maybe_func, hparams=hparams):
-        pass
-
-    return Transformer
+    @doc_inherit(SKCTransformerABC._transform_data)
+    def _transform_data(self, **kwargs):
+        tdata = self._skcriteria_auto_function(hparams=self, **kwargs)
+        # if the function return tdata we will remove it
+        tdata.pop("hparams", None)
+        # replace the old values with the new ones
+        kwargs.update(tdata)
+        return kwargs
