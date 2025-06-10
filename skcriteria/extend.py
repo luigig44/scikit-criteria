@@ -23,14 +23,15 @@ real objects.
 # =============================================================================
 # IMPORTS
 # =============================================================================ç
-from functools import partial
 
 from .utils import hidden
 
 with hidden():
+    from functools import partial
     import inspect
     import warnings
 
+    from .core import SKCMethodABC
     from .agg import RankResult, SKCDecisionMakerABC
     from .preprocessing import SKCTransformerABC
     from .utils import doc_inherit
@@ -118,7 +119,9 @@ def _check_function_parameters(func):
         )
 
 
-class _AutoMethodMixin:
+class _AutoMethodMixin(SKCMethodABC):
+    _skcriteria_abstract_class = True
+
     def __init_subclass__(cls, from_=None, hparams={}, **kwargs):
         if from_ is not None:
             _check_model_CapWords_convention_name(from_.__name__)
@@ -149,16 +152,16 @@ def _mkmaker(cls):
         if maybe_func is None:
             return partial(mk, **hparams)
 
-        class scls(cls, from_=maybe_func, hparams=hparams):
+        class subcls(cls, from_=maybe_func, hparams=hparams):
             pass
 
-        return scls
+        return subcls
 
     return mk
 
 
 @_mkmaker
-class mkagg(_AutoMethodMixin, SKCDecisionMakerABC):
+class mkagg(SKCDecisionMakerABC, _AutoMethodMixin):
     """Decorator factory function for creating aggregation classes.
 
     Parameters
@@ -224,7 +227,7 @@ class mkagg(_AutoMethodMixin, SKCDecisionMakerABC):
 
 
 @_mkmaker
-class mktransformer(_AutoMethodMixin, SKCTransformerABC):
+class mktransformer(SKCTransformerABC, _AutoMethodMixin):
     """Decorator factory function for creating transformation classes.
 
     Parameters
